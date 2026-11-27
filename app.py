@@ -19,46 +19,19 @@ if "user_email" not in st.session_state:
 # ======================
 # Support the Writer
 # ======================
-def support_writer():
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style="
-            background-color: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px 24px;
-            text-align: center;
-            margin-top: 30px;
-            border: 1px solid #e9ecef;
-        ">
-            <div style="font-size: 1.25rem; font-weight: 600; margin-bottom: 8px;">
-                ❤️ Support the Writer
-            </div>
-            <p style="color: #555; margin-bottom: 18px; font-size: 0.95rem;">
-                If this tool helped you, consider buying me a coffee!
-            </p>
-            <a href="https://www.buymeacoffee.com/yourusername" target="_blank" style="text-decoration: none;">
-                <div style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 10px;
-                    background-color: #FFDD00;
-                    color: #000000;
-                    font-weight: 700;
-                    font-size: 1.1rem;
-                    padding: 12px 28px;
-                    border-radius: 50px;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                    transition: all 0.2s ease;
-                ">
-                    <span style="font-size: 1.4rem;">☕</span>
-                    Buy me a coffee
-                </div>
-            </a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("💖 Support the Writer")
+st.sidebar.markdown("If this tool helped you, consider buying me a coffee!")
+st.sidebar.markdown(
+    '<a href="https://www.buymeacoffee.com/itmasterngw" target="_blank">'
+    '<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" '
+    'alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >'
+    '</a>',
+    unsafe_allow_html=True
+)
+
+
 
 # ======================
 # Simple Email Login
