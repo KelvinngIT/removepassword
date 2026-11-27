@@ -1,77 +1,108 @@
-# ======================
-# Sidebar - Upload Expenses
-# ======================
-st.sidebar.markdown("---")
-st.sidebar.header("📥 Upload Expenses")
+import streamlit as st
+from pathlib import Path
+from unlocker import ExcelUnlocker
 
-uploaded_file = st.sidebar.file_uploader(
-    "Upload Expenses CSV",
-    type=["csv"],
-    help="Supports Simplified & Traditional Chinese. Prefer CSV UTF-8 from Excel.",
-    key="upload_expenses",
+st.set_page_config(
+    page_title="Excel Unlocker",
+    page_icon="🔓",
+    layout="centered"
 )
 
-if uploaded_file is not None:
-    try:
-        import_df = read_csv_chinese_safe(uploaded_file)
-        import_df.columns = import_df.columns.astype(str).str.strip()
-        original_cols = list(import_df.columns)
-        import_df = normalize_columns(import_df)
+# ======================
+# Session State
+# ======================
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
 
-        if "Currecny" in import_df.columns and "Currency" not in import_df.columns:
-            import_df = import_df.rename(columns={"Currecny": "Currency"})
+# ======================
+# Simple Email Login
+# ======================
+def login_page():
+    st.title("🔓 Excel Unlocker")
+    st.subheader("Login with your email")
 
-        min_required = {"Date", "Category", "Amount"}
-        if not min_required.issubset(set(import_df.columns)):
-            st.sidebar.error(
-                "Missing required columns.\n"
-                "Need at least: Date, Category, Amount\n"
-                f"Found: {', '.join(original_cols)}"
-            )
-        else:
-            defaults = {
-                "User": USER,
-                "Currency": "HKD",
-                "Vendor": "-",
-                "Description": "-",
-                "Remark": "-",
-                "Source": "Import"
-            }
-            for col, default in defaults.items():
-                if col not in import_df.columns:
-                    import_df[col] = default
+    with st.form("login_form"):
+        email = st.text_input("Email address", placeholder="you@example.com")
+        submit = st.form_submit_button("Login", use_container_width=True, type="primary")
 
-            for col in COLUMNS:
-                if col not in import_df.columns:
-                    import_df[col] = defaults.get(col, "-")
-
-            import_df = import_df[COLUMNS].copy()
-            import_df["Date"] = normalize_date_column(import_df["Date"])
-            import_df["Amount"] = clean_amount(import_df["Amount"])
-            import_df = import_df[import_df["Amount"] > 0].copy()
-
-            for col in ["User", "Category", "Currency", "Vendor", "Description", "Remark", "Source", "Date"]:
-                import_df[col] = import_df[col].fillna(defaults.get(col, "-")).astype(str).str.strip()
-                import_df.loc[import_df[col] == "", col] = defaults.get(col, "-")
-                if col == "Vendor":
-                    import_df.loc[import_df[col].str.lower().isin(["nan", "none", "null"]), col] = "-"
-
-            st.sidebar.markdown(f"**Preview** ({len(import_df)} rows)")
-            st.sidebar.dataframe(
-                import_df[["Date", "Category", "Amount", "Currency", "Vendor"]].head(8),
-                use_container_width=True,
-                hide_index=True
-            )
-
-            if st.sidebar.button("Import Expenses", use_container_width=True, type="primary", key="import_exp"):
-                before = len(st.session_state.expenses)
-                st.session_state.expenses = pd.concat(
-                    [st.session_state.expenses, import_df], ignore_index=True
-                )
-                st.session_state.expenses["Amount"] = clean_amount(st.session_state.expenses["Amount"])
-                st.session_state.expenses["Date"] = normalize_date_column(st.session_state.expenses["Date"])
-                save_data()
-                st.sidebar.success(f"✅ Imported {len(st.session_state.expenses) - before} expenses!")
+        if submit:
+            email = email.strip().lower()
+            if not email:
+                st.error("Please enter your email.")
+            elif "@" not in email or "." not in email:
+                st.error("Please enter a valid email address.")
+            else:
+                st.session_state.logged_in = True
+                st.session_state.user_email = email
+                st.success("Login successful!")
                 st.rerun()
-    except Exception as e:
-        st.sidebar.error(f"Error reading file: {e}")
+
+# ======================
+# Main App
+# ======================
+def main_app():
+    st.title("🔓 Excel Unlocker")
+    st.write(f"Welcome, **{st.session_state.user_email}**")
+
+    if st.button("Logout", type="secondary"):
+        st.session_state.logged_in = False
+        st.session_state.user_email = ""
+        st.rerun()
+
+    st.divider()
+
+    st.subheader("Upload Protected Excel File")
+    uploaded_file = st.file_uploader(
+        "Choose a .xlsx or .xlsm file",
+        type=["xlsx", "xlsm"]
+    )
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        remove_workbook = st.checkbox("Remove Workbook Protection", value=True)
+    with col2:
+        remove_worksheet = st.checkbox("Remove Sheet Protection", value=True)
+    with col3:
+        remove_vba = st.checkbox("Remove VBA Protection", value=False)
+
+    if uploaded_file is not None:
+        # Save uploaded file temporarily
+        temp_input = Path("temp_uploads")
+        temp_input.mkdir(exist_ok=True)
+        input_path = temp_input / uploaded_file.name
+
+        with open(input_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        if st.button("🚀 Unlock File", type="primary", use_container_width=True):
+            with st.spinner("Unlocking file..."):
+                try:
+                    unlocker = ExcelUnlocker(str(input_path))
+                    output_path = unlocker.unlock(
+                        remove_workbook=remove_workbook,
+                        remove_worksheet=remove_worksheet,
+                        remove_vba=remove_vba
+                    )
+
+                    st.success("File unlocked successfully!")
+
+                    with open(output_path, "rb") as f:
+                        st.download_button(
+                            label="⬇️ Download Unlocked File",
+                            data=f,
+                            file_name=Path(output_path).name,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True
+                        )
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+
+# ======================
+# Run App
+# ======================
+if st.session_state.logged_in:
+    main_app()
+else:
+    login_page()
