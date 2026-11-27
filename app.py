@@ -17,21 +17,25 @@ if "user_email" not in st.session_state:
     st.session_state.user_email = ""
 
 # ======================
-# Support the Writer
+# Support the Writer (Sidebar)
 # ======================
+def support_writer():
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("💖 Support the Writer")
+    st.sidebar.markdown("If this tool helped you, consider buying me a coffee!")
+    st.sidebar.markdown(
+        '''
+        <a href="https://www.buymeacoffee.com/itmasterngw" target="_blank">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                 alt="Buy Me A Coffee"
+                 style="height: 60px !important; width: 217px !important;">
+        </a>
+        ''',
+        unsafe_allow_html=True
+    )
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("💖 Support the Writer")
-st.sidebar.markdown("If this tool helped you, consider buying me a coffee!")
-st.sidebar.markdown(
-    '<a href="https://www.buymeacoffee.com/itmasterngw" target="_blank">'
-    '<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" '
-    'alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >'
-    '</a>',
-    unsafe_allow_html=True
-)
-
-
+# Always show the support section in the sidebar
+support_writer()
 
 # ======================
 # Simple Email Login
@@ -115,9 +119,6 @@ def main_app():
                         )
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-
-    # Support section at the bottom
-    support_writer()
 
 # ======================
 # Run App
