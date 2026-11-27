@@ -335,10 +335,7 @@ if uploaded_file is not None:
 
         min_required = {"Date", "Category", "Amount"}
         if not min_required.issubset(set(import_df.columns)):
-            st.sidebar.error(
-                f"Missing required columns.\nNeed at least: Date, Category, Amount\n"
-                f"Found: {', '.join(original_cols)}"
-            )
+            st.sidebar.error(f"Missing required columns. Found: {', '.join(import_inc.columns)}")
         else:
             defaults = {
                 "User": USER, "Currency": "HKD", "Vendor": "-",
