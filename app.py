@@ -1,10 +1,6 @@
 import streamlit as st
 from pathlib import Path
-import database as db
 from unlocker import ExcelUnlocker
-
-# Initialize database
-db.init_db()
 
 st.set_page_config(
     page_title="Excel Unlocker",
@@ -12,52 +8,40 @@ st.set_page_config(
     layout="centered"
 )
 
-# Session state
+# ======================
+# Session State
+# ======================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_email" not in st.session_state:
     st.session_state.user_email = ""
 
+# ======================
+# Simple Email Login
+# ======================
 def login_page():
     st.title("🔓 Excel Unlocker")
-    st.subheader("Login to continue")
+    st.subheader("Login with your email")
 
-    tab1, tab2 = st.tabs(["Login", "Register"])
+    with st.form("login_form"):
+        email = st.text_input("Email address", placeholder="you@example.com")
+        submit = st.form_submit_button("Login", use_container_width=True, type="primary")
 
-    with tab1:
-        with st.form("login_form"):
-            email = st.text_input("Email")
-            password = st.text_input("Password", type="password")
-            submit = st.form_submit_button("Login", use_container_width=True)
+        if submit:
+            email = email.strip().lower()
+            if not email:
+                st.error("Please enter your email.")
+            elif "@" not in email or "." not in email:
+                st.error("Please enter a valid email address.")
+            else:
+                st.session_state.logged_in = True
+                st.session_state.user_email = email
+                st.success("Login successful!")
+                st.rerun()
 
-            if submit:
-                if db.verify_user(email, password):
-                    st.session_state.logged_in = True
-                    st.session_state.user_email = email
-                    st.success("Login successful!")
-                    st.rerun()
-                else:
-                    st.error("Invalid email or password")
-
-    with tab2:
-        with st.form("register_form"):
-            name = st.text_input("Full Name")
-            email = st.text_input("Email", key="reg_email")
-            password = st.text_input("Password", type="password", key="reg_pass")
-            confirm = st.text_input("Confirm Password", type="password")
-            submit = st.form_submit_button("Create Account", use_container_width=True)
-
-            if submit:
-                if password != confirm:
-                    st.error("Passwords do not match")
-                elif len(password) < 6:
-                    st.error("Password must be at least 6 characters")
-                else:
-                    if db.create_user(email, password, name):
-                        st.success("Account created! Please login.")
-                    else:
-                        st.error("Email already registered")
-
+# ======================
+# Main App
+# ======================
 def main_app():
     st.title("🔓 Excel Unlocker")
     st.write(f"Welcome, **{st.session_state.user_email}**")
@@ -115,7 +99,9 @@ def main_app():
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
 
-# ====================== Run App ======================
+# ======================
+# Run App
+# ======================
 if st.session_state.logged_in:
     main_app()
 else:
