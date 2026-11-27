@@ -7,6 +7,7 @@ import secrets
 import string
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+st.write(st.secrets.get("email", "NO EMAIL SECTION FOUND"))
 
 # Initialize database
 db.init_db()
