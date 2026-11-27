@@ -1,54 +1,16 @@
-import sqlite3
-import bcrypt
-from pathlib import Path
+def user_exists(email: str) -> bool:
+    """Return True if the email is already registered."""
+    # Example with SQLite:
+    # conn = get_connection()
+    # cur = conn.execute("SELECT 1 FROM users WHERE email = ?", (email,))
+    # return cur.fetchone() is not None
+    ...
 
-DB_PATH = Path("users.db")
-
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            name TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-def create_user(email: str, password: str, name: str = "") -> bool:
-    try:
-        password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute(
-            "INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)",
-            (email.lower().strip(), password_hash, name)
-        )
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        return False
-
-def verify_user(email: str, password: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT password_hash FROM users WHERE email = ?", (email.lower().strip(),))
-    row = c.fetchone()
-    conn.close()
-
-    if row is None:
-        return False
-    return bcrypt.checkpw(password.encode(), row[0])
-
-def get_user_name(email: str) -> str:
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT name FROM users WHERE email = ?", (email.lower().strip(),))
-    row = c.fetchone()
-    conn.close()
-    return row[0] if row else ""
+def set_temp_password(email: str, plain_password: str) -> bool:
+    """
+    Hash the temporary password and update it for the given user.
+    Return True on success.
+    """
+    # hashed = hash_password(plain_password)   # use the same hashing as create_user
+    # UPDATE users SET password = ? WHERE email = ?
+    ...
